@@ -1,0 +1,16 @@
+.env
+.env.local
+.env.production
+*.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+node_modules/
+.next/
+*.log
+*.key
+*.pem
+secrets.json
+.DS_Store
+.env.example
