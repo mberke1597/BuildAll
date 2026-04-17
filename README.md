@@ -1,58 +1,175 @@
-# BuildAll MVP
+# BuildAll
 
-Production-quality MVP monorepo for a 24/7 Construction Consultant ↔ Client communication app.
+> AI-powered Construction Project Management Platform — 24/7 Consultant ↔ Client communication with autonomous AI agents.
+
+---
 
 ## ✨ Features
 
-- **Modern Dark Theme UI** - Professional, clean interface with smooth animations
-- **AI Chatbot Assistant** - 24/7 AI-powered construction consultant (floating chat widget)
-- **Real-time Project Chat** - WebSocket-based team communication
-- **Document Management** - Upload, process, and search project documents
-- **AI Document Q&A** - Ask questions about your uploaded documents with citations
-- **Cost Estimation** - AI-powered project cost calculations
-- **Analytics Dashboard** - Track project activity and audit logs
-- **Multi-role Support** - Admin, Consultant, and Client roles
+### 🤖 AI Agent Layer (ReAct Architecture)
+- **Risk Monitor Agent** — Autonomously scans project data, identifies risks, and writes CRITICAL alerts to the database
+- **Cost Advisor Agent** — Analyzes project cost data and generates budget recommendations
+- **Document Analyst Agent** — Processes uploaded documents and extracts key insights
+- All agents use **Think → Act → Observe** reasoning loop (ReAct pattern)
 
-## Quick start
-1. Copy `.env.example` to `.env` and set `OPENAI_API_KEY` (required for AI features).
-2. Run `docker compose up --build`.
-3. Open web: http://localhost:3000
-4. API: http://localhost:8000/docs
+### 💬 Communication & Collaboration
+- **AI Chatbot Assistant** — 24/7 AI-powered construction consultant (floating chat widget)
+- **Real-time Project Chat** — WebSocket-based team communication
+- **Multi-role Support** — Admin, Consultant, and Client roles
 
-## Demo script
-1. Login as consultant: `consultant@demo.com / Consultant123!`
-2. Create a project.
-3. Invite a client (add member from API or admin account).
-4. Send a text + file + voice note in project chat.
-5. Upload a PDF and ask a question with citations.
-6. Run a cost estimate.
-7. **Try the AI chatbot** - click the chat bubble in the bottom-right corner!
+### 📁 Document & Data Management
+- **Document Management** — Upload, process, and search project documents
+- **AI Document Q&A** — Ask questions about uploaded documents with citations
+- **Cost Estimation** — AI-powered project cost calculations
+- **Analytics Dashboard** — Track project activity and audit logs
 
-## Demo Accounts
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@demo.com | Admin123! |
-| Consultant | consultant@demo.com | Consultant123! |
-| Client | client@demo.com | Client123! |
+---
 
-## Services
-- Web: http://localhost:3000
-- API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-- Worker health: http://localhost:8001/healthz
-- MinIO: http://localhost:9001
+## 🚀 Quick Start
 
-## Tests
-- Backend: `pytest` (apps/api)
-- Frontend: `npm run test:e2e` (apps/web)
+```bash
+# 1. Clone the repo
+git clone https://github.com/mberke1597/BuildAll.git
+cd BuildAll
 
-## Tech Stack
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Backend**: FastAPI, SQLAlchemy, PostgreSQL + pgvector
-- **AI**: OpenAI GPT-4 / GPT-3.5, Embeddings
-- **Storage**: MinIO (S3-compatible)
-- **Queue**: Redis + RQ
+# 2. Set up environment
+cp .env.example .env
+# Edit .env and set GEMINI_API_KEY
 
-## Notes
-- Migrations run on API container startup (`alembic upgrade head`).
-- The AI chatbot works with or without login (limited features when logged out).
+# 3. Start all services
+docker compose up --build
+
+# 4. Open
+#   Web:      http://localhost:3000
+#   API docs: http://localhost:8000/docs
+```
+
+---
+
+## 🔑 Demo Accounts
+
+| Role       | Email                  | Password       |
+|------------|------------------------|----------------|
+| Admin      | admin@demo.com         | Admin123!      |
+| Consultant | consultant@demo.com    | Consultant123! |
+| Client     | client@demo.com        | Client123!     |
+
+---
+
+## 🤖 Running AI Agents
+
+```bash
+# Get auth token
+TOKEN=$(curl -s -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"consultant@demo.com","password":"Consultant123!"}' \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+# Run Risk Monitor Agent
+curl -s -X POST http://localhost:8000/agents/run \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"project_id":1,"agent_type":"risk_monitor"}' | python3 -m json.tool
+
+# Available agent types:
+#   risk_monitor      — detects project risks autonomously
+#   cost_advisor      — analyzes budget and cost data
+#   document_analyst  — extracts insights from documents
+```
+
+### Example Agent Output
+```json
+{
+  "run_id": 5,
+  "status": "completed",
+  "agent_type": "risk_monitor",
+  "steps_count": 14,
+  "total_elapsed_ms": 10487,
+  "answer": {
+    "project_health_score": 10,
+    "top_3_immediate_concerns": [
+      "Complete absence of project schedule data",
+      "Complete absence of project cost data",
+      "Complete absence of RFI data"
+    ],
+    "recommended_actions": ["..."]
+  }
+}
+```
+
+---
+
+## 🧠 Agent Architecture
+
+```
+User Request
+     │
+     ▼
+ Orchestrator
+     │
+     ▼
+┌─────────────────────────────┐
+│        ReAct Loop           │
+│                             │
+│  1. THINK  — reason about   │
+│             current state   │
+│  2. ACT    — call a tool    │
+│  3. OBSERVE — process result│
+│  4. REPEAT until done       │
+└─────────────────────────────┘
+     │
+     ▼
+ Tools Available:
+  • get_project_schedule
+  • get_project_cost_summary
+  • get_project_rfis
+  • get_project_risks
+  • create_risk
+  • get_project_documents
+```
+
+---
+
+## 🛠 Tech Stack
+
+| Layer      | Technology                                      |
+|------------|-------------------------------------------------|
+| Frontend   | Next.js 14, React 18, TypeScript                |
+| Backend    | FastAPI, SQLAlchemy, PostgreSQL + pgvector      |
+| AI         | Gemini 2.5 Flash (chat + agents + embeddings)   |
+| Storage    | MinIO (S3-compatible)                           |
+| Queue      | Redis + RQ                                      |
+| Deploy     | Docker Compose / Railway                        |
+
+---
+
+## 📡 Services
+
+| Service      | URL                          |
+|--------------|------------------------------|
+| Web          | http://localhost:3000        |
+| API          | http://localhost:8000        |
+| API Docs     | http://localhost:8000/docs   |
+| Worker       | http://localhost:8001/healthz|
+| MinIO        | http://localhost:9001        |
+
+---
+
+## 🧪 Tests
+
+```bash
+# Backend
+cd apps/api && pytest
+
+# Frontend
+cd apps/web && npm run test:e2e
+```
+
+---
+
+## 📝 Notes
+
+- Migrations run automatically on API startup (`alembic upgrade head`)
+- Agents require a valid `GEMINI_API_KEY` in `.env`
+- Gemini free tier has rate limits — agents may take 30–120s on first run
+- The AI chatbot works with or without login (limited features when logged out)
